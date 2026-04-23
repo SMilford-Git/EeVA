@@ -1,0 +1,460 @@
+{
+  "name": "Ethical Evaluation Agent - Starter Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const item = $input.item.json;\nconst binary = $input.item.binary;\n\n// Handle webhook binary data structure - file is in binary.file\nif (!binary || !binary.file) {\n  return { json: { validation_passed: false, error_message: 'No file uploaded', ...item }, binary };\n}\n\nconst file = binary.file;\nconst filename = file.fileName || 'unknown';\nconst mimetype = file.mimeType || '';\nconst fileSize = file.fileSize || 0;\n\n// Extract use_case_name from webhook body or query parameters\nconst use_case_name = item.body?.use_case_name || item.query?.use_case_name || '';\n\n// Support TXT, MD, and simple text-based PDF files\nconst allowedTypes = ['text/plain', 'text/markdown', 'application/pdf'];\nconst allowedExtensions = ['.txt', '.md', '.pdf'];\n\nconst hasValidMime = allowedTypes.includes(mimetype);\nconst hasValidExt = allowedExtensions.some(ext => filename.toLowerCase().endsWith(ext));\n\nif (!hasValidMime && !hasValidExt) {\n  return {\n    json: {\n      validation_passed: false,\n      error_message: 'Unsupported file type. This prototype supports TXT, MD, and simple text-based PDF files only.',\n      filename,\n      mimetype,\n      ...item\n    },\n    binary\n  };\n}\n\nconst maxSize = 16 * 1024 * 1024;\nif (fileSize > maxSize) {\n  return {\n    json: {\n      validation_passed: false,\n      error_message: `File size (${(fileSize / 1024 / 1024).toFixed(2)} MB) exceeds maximum allowed size of 16 MB.`,\n      filename,\n      fileSize,\n      ...item\n    },\n    binary\n  };\n}\n\nreturn { json: { validation_passed: true, filename, mimetype, fileSize, use_case_name, ...item }, binary };"
+      },
+      "id": "593be507-a276-49f2-a7e1-c3aa397c1198",
+      "name": "Validate File Type and Size",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        704,
+        -672
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "id-1",
+              "leftValue": "={{ $json.validation_passed }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "66e78e71-7422-405d-8c87-c3f42da0f41d",
+      "name": "Check Validation Result",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        928,
+        -672
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "5e30fd32-503e-4400-a28f-e3591e213263",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "54a07ed8-daaa-47e2-a3fb-530b3812fe34",
+      "name": "Upload Use Case",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        480,
+        -672
+      ],
+      "webhookId": "5e30fd32-503e-4400-a28f-e3591e213263"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "run_id",
+              "value": "={{ $now.toMillis() }}_{{ $json.filename?.replace(/[^a-zA-Z0-9]/g, '_') || 'unknown' }}",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "status",
+              "value": "processing",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "use_case_name",
+              "value": "={{ $json.use_case_name || \"Unnamed Use Case\" }}",
+              "type": "string"
+            },
+            {
+              "id": "id-4",
+              "name": "source_filename",
+              "value": "={{ $json.filename || \"uploaded_use_case.txt\" }}",
+              "type": "string"
+            },
+            {
+              "id": "id-5",
+              "name": "upload_timestamp",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "id-6",
+              "name": "version_tag",
+              "value": "={{ $json.version_tag || \"v1.0\" }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "7cd6a97d-d99a-496a-b8ee-1917be7e7000",
+      "name": "Create Run ID and Initial Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1152,
+        -576
+      ]
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "DNacjRgVJha8PxKq",
+          "mode": "list",
+          "cachedResultName": "ethical_evaluation_runs",
+          "cachedResultUrl": "/projects/1B4b17AszdwOQrGy/datatables/DNacjRgVJha8PxKq"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "run_id": "={{ $json.run_id }}",
+            "status": "={{ $json.status }}",
+            "use_case_name": "={{ $json.use_case_name }}",
+            "source_filename": "={{ $json.source_filename }}",
+            "upload_timestamp": "={{ $json.upload_timestamp }}",
+            "version_tag": "={{ $json.version_tag }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "run_id",
+              "displayName": "run_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "use_case_name",
+              "displayName": "use_case_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "source_filename",
+              "displayName": "source_filename",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "upload_timestamp",
+              "displayName": "upload_timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "version_tag",
+              "displayName": "version_tag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "summary",
+              "displayName": "summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "evaluations_json",
+              "displayName": "evaluations_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "report_html",
+              "displayName": "report_html",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "error_message",
+              "displayName": "error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1600,
+        -672
+      ],
+      "id": "b023a73d-5eaf-4343-bbfe-db1d3c9c67a5",
+      "name": "Insert row"
+    },
+    {
+      "parameters": {
+        "enableResponseOutput": true,
+        "respondWith": "json",
+        "responseBody": "={{ {\n  run_id: $json.run_id,\n  status: \"processing\",\n  message: \"Evaluation started successfully\"\n} }}",
+        "options": {}
+      },
+      "id": "bc3bda49-f7d2-4d55-8c50-66fd0aada913",
+      "name": "Return Start Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1376,
+        -576
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "error",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "id-2",
+              "name": "error_type",
+              "value": "validation_error",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "error_message",
+              "value": "={{ $json.error_message }}",
+              "type": "string"
+            },
+            {
+              "id": "id-4",
+              "name": "filename",
+              "value": "={{ $json.filename || 'unknown' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "25340918-bd18-43ea-8920-5583cf885d48",
+      "name": "Format Validation Error",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1152,
+        -768
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "0529cf00-1be2-40b5-a5a1-239b7a7283d3",
+      "name": "Return Error Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1376,
+        -768
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "vr2d7m8ivVcUAXQq",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/vr2d7m8ivVcUAXQq",
+          "cachedResultName": "Ethical Evaluation Worker"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        1600,
+        -480
+      ],
+      "id": "651c0405-47b4-44c3-aa13-90cf5fbffb53",
+      "name": "Call 'Ethical Evaluation Worker'"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Validate File Type and Size": {
+      "main": [
+        [
+          {
+            "node": "Check Validation Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Validation Result": {
+      "main": [
+        [
+          {
+            "node": "Create Run ID and Initial Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Validation Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Use Case": {
+      "main": [
+        [
+          {
+            "node": "Validate File Type and Size",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Run ID and Initial Data": {
+      "main": [
+        [
+          {
+            "node": "Return Start Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert row": {
+      "main": [
+        []
+      ]
+    },
+    "Format Validation Error": {
+      "main": [
+        [
+          {
+            "node": "Return Error Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Return Start Response": {
+      "main": [
+        [
+          {
+            "node": "Call 'Ethical Evaluation Worker'",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Insert row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "cccbe338-b192-4211-a908-476b1d2a2630",
+  "meta": {
+    "instanceId": "a1decf7bf30a049b0df0b5e29893df517cf972c8d0dd0cdfdff981a5532a2fcb"
+  },
+  "id": "6wX4TiJ8S52qvqMj",
+  "tags": []
+}

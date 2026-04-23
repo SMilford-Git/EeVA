@@ -1,0 +1,474 @@
+{
+  "name": "Ethical Evaluation Agent - get results webhook",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "c62d20ce-cfc7-4862-9abb-236bebf84517",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "5dcf0ced-0a9f-4529-a07a-c2b6333d13b1",
+      "name": "Get Result Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        480,
+        1120
+      ],
+      "webhookId": "c62d20ce-cfc7-4862-9abb-236bebf84517"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "DNacjRgVJha8PxKq",
+          "mode": "list",
+          "cachedResultName": "ethical_evaluation_runs",
+          "cachedResultUrl": "/projects/1B4b17AszdwOQrGy/datatables/DNacjRgVJha8PxKq"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "run_id",
+              "keyValue": "={{ $json.query.run_id }}"
+            }
+          ]
+        }
+      },
+      "id": "828d2c04-3569-4895-9041-865ed0d7897a",
+      "name": "Lookup Run by ID",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        704,
+        1120
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "0f3fe73d-befd-4f47-9dc4-60542b4ba433",
+              "leftValue": "",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "96e2cb1e-7210-405e-ac2e-fa35417aa304",
+      "name": "Check If Row Found",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        928,
+        1120
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "635d3bc2-3b91-4933-9e50-9396c825d99b",
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": "processing",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "39e4561f-d7bb-4932-90b3-a05e1fad2fc0",
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": "complete",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "d2e6f54d-57eb-4d04-a134-3a63c56101d6",
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": "error",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "looseTypeValidation": "=",
+        "options": {}
+      },
+      "id": "d9bf8b9a-8071-4614-af52-9ac1da09c298",
+      "name": "Route by Status",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1152,
+        1296
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3640c504-bd8c-488b-9beb-ac2352cc96f4",
+              "name": "query.run_id",
+              "value": "={{ $('Get Result Webhook').item.json.query.run_id }}",
+              "type": "string"
+            },
+            {
+              "id": "732e9c41-e095-487a-9221-f19d9f2d343c",
+              "name": "status",
+              "value": "not_found",
+              "type": "string"
+            },
+            {
+              "id": "6cf68bd8-9578-41a0-80cc-0b08c75144b6",
+              "name": "error_message",
+              "value": "no run found for this run_id",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "cbf51c47-ba28-4b57-8879-1550fc8afe42",
+      "name": "Format Not Found Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1376,
+        928
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "da6320eb-ab5f-4380-bdd2-eb0396b76036",
+              "name": "run_id",
+              "value": "={{ $json.run_id }}",
+              "type": "string"
+            },
+            {
+              "id": "9af8d273-2a1b-4b0b-9090-666d370cb04f",
+              "name": "status",
+              "value": "={{ $json.status }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b183fbb6-611e-4718-9c13-11e2c3ad5ca1",
+      "name": "Format Processing Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1376,
+        1120
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8ccf8473-943f-4be8-8ca2-9017d0ec5cad",
+              "name": "run_id",
+              "value": "={{ $json.run_id }}",
+              "type": "string"
+            },
+            {
+              "id": "38a7b3d4-c0ed-4b2f-9bfd-9d7cb9156307",
+              "name": "status",
+              "value": "={{ $json.status }}",
+              "type": "string"
+            },
+            {
+              "id": "8d51e172-2b51-4642-a055-c695da648f74",
+              "name": "error_message",
+              "value": "={{ $json.error_message }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4ab3cac5-79a9-4635-becb-c82f866a735e",
+      "name": "Format Error Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1376,
+        1504
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9a3c65f5-4cdd-45ac-b481-f74f2ddbba56",
+              "name": "run_id",
+              "value": "={{ $json.run_id }}",
+              "type": "string"
+            },
+            {
+              "id": "6111e17b-8fa4-488b-b6dd-5a2d90cb9d45",
+              "name": "status",
+              "value": "={{ $json.status }}",
+              "type": "string"
+            },
+            {
+              "id": "d221dd4d-6a78-494c-8f9d-fdc8054f8b8e",
+              "name": "use_case_name",
+              "value": "={{ $json.use_case_name }}",
+              "type": "string"
+            },
+            {
+              "id": "65aab7e9-4ebb-48ba-8537-a1bee77938d5",
+              "name": "source_filename",
+              "value": "={{ $json.source_filename }}",
+              "type": "string"
+            },
+            {
+              "id": "60e70769-9da0-4025-b73e-cc93f1018a05",
+              "name": "upload_timestamp",
+              "value": "={{ $json.upload_timestamp }}",
+              "type": "string"
+            },
+            {
+              "id": "1e1e9156-34d5-47a2-9c09-7b64ad636f26",
+              "name": "version_tag",
+              "value": "={{ $json.version_tag }}",
+              "type": "string"
+            },
+            {
+              "id": "2f1b0fb4-1f8e-4400-b382-bb9e14d47a0d",
+              "name": "summary",
+              "value": "={{ $json.summary }}",
+              "type": "string"
+            },
+            {
+              "id": "6a040523-e375-4595-9bb9-ce7fe7dbf68e",
+              "name": "evaluations",
+              "value": "={{ $json.evaluations }}",
+              "type": "string"
+            },
+            {
+              "id": "edf5971d-0661-4816-9d89-de33c43e5126",
+              "name": "report_html",
+              "value": "={{ $json.report_html }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7381afe1-f521-413b-b423-83f995e64e5d",
+      "name": "Format Complete Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1376,
+        1312
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "2ac19fe9-063d-483f-a6be-5cf431663a87",
+      "name": "Return Result",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1600,
+        1216
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get Result Webhook": {
+      "main": [
+        [
+          {
+            "node": "Lookup Run by ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Run by ID": {
+      "main": [
+        [
+          {
+            "node": "Check If Row Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check If Row Found": {
+      "main": [
+        [
+          {
+            "node": "Route by Status",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Not Found Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Status": {
+      "main": [
+        [
+          {
+            "node": "Format Processing Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Complete Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Error Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Not Found Response": {
+      "main": [
+        [
+          {
+            "node": "Return Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Processing Response": {
+      "main": [
+        [
+          {
+            "node": "Return Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Error Response": {
+      "main": [
+        [
+          {
+            "node": "Return Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Complete Response": {
+      "main": [
+        [
+          {
+            "node": "Return Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "ad688e3f-9fe4-43c9-b913-9005af635f13",
+  "meta": {
+    "instanceId": "a1decf7bf30a049b0df0b5e29893df517cf972c8d0dd0cdfdff981a5532a2fcb"
+  },
+  "id": "2bK1j35yeqswb7tt",
+  "tags": []
+}
