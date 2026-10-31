@@ -712,7 +712,7 @@
                 <span class="muted">Framework evaluation</span>
               </div>
               ${item.metric ? renderMetricMiniCard(item.metric) : ""}
-              ${item.metric_error ? `<div class="benchmark-note"><strong>Benchmark note:</strong> ${escapeHtml(item.metric_error)}</div>` : ""}
+              ${item.metric_error ? `<div class="benchmark-note"><strong>Assessment note:</strong> ${escapeHtml(item.metric_error)}</div>` : ""}
               ${formatText(item.framework_evaluation)}
             </div>
           `;
@@ -747,61 +747,18 @@
 
       return `
         <div class="summary-box">
-          <div class="framework-title">Benchmark overview</div>
-          <p class="muted">Scores indicate framework-relative alignment only. They do not represent objective moral truth or a universal ethical score.</p>
+          <div class="framework-title">Ethical Landscape</div>
           ${topCards}
-          ${renderBarChart(benchmarkData.frameworks)}
-        </div>
-      `;
-    }
-
-    function renderBarChart(items) {
-      if (!items.length) {
-        return '<p class="empty">No benchmark metrics were found in the returned text.</p>';
-      }
-
-      return `
-        <div class="bar-chart">
-          ${items.map(item => `
-            <div class="bar-row">
-              <div class="bar-row-top">
-                <div class="bar-framework">${escapeHtml(item.framework_name || "Unknown framework")}</div>
-                <div class="bar-verdict">${escapeHtml(formatVerdictLabel(item.verdict_label))}</div>
-              </div>
-              <div class="bar-track" aria-label="Alignment score for ${escapeHtml(item.framework_name || 'framework')}">
-                <div class="bar-fill" style="width:${normaliseScore(item.alignment_score)}%"></div>
-              </div>
-              <div class="bar-metrics">
-                <span class="metric-chip"><strong>Alignment:</strong> ${normaliseScore(item.alignment_score)}</span>
-                <span class="metric-chip"><strong>Concern:</strong> ${normaliseScore(item.concern_score)}</span>
-                <span class="metric-chip"><strong>Confidence:</strong> ${normaliseScore(item.confidence_score)}</span>
-              </div>
-            </div>
-          `).join("")}
         </div>
       `;
     }
 
     function renderMetricMiniCard(metric) {
       return `
-        <div class="metric-grid">
-          <div class="metric-card">
-            <div class="metric-label">Alignment</div>
-            <div class="metric-value">${normaliseScore(metric.alignment_score)}</div>
-          </div>
-          <div class="metric-card">
-            <div class="metric-label">Concern</div>
-            <div class="metric-value">${normaliseScore(metric.concern_score)}</div>
-          </div>
-          <div class="metric-card">
-            <div class="metric-label">Confidence</div>
-            <div class="metric-value">${normaliseScore(metric.confidence_score)}</div>
-          </div>
-          <div class="metric-card">
-            <div class="metric-label">Benchmark</div>
-            <div class="metric-value" style="font-size:18px;">${escapeHtml(formatVerdictLabel(metric.verdict_label))}</div>
-            ${metric.brief_rationale ? `<div class="metric-subtext">${escapeHtml(metric.brief_rationale)}</div>` : ""}
-          </div>
+        <div class="metric-card">
+          <div class="metric-label">Framework alignment</div>
+          <div class="metric-value">${escapeHtml(formatVerdictLabel(metric.verdict_label || "Not assessed"))}</div>
+          ${metric.brief_rationale ? `<div class="metric-subtext">${escapeHtml(metric.brief_rationale)}</div>` : ""}
         </div>
       `;
     }
@@ -821,7 +778,7 @@
       return {
         summaryMetric,
         frameworks,
-        hasAnyMetrics: frameworks.length > 0 || !!summaryMetric
+        hasAnyMetrics: !!summaryMetric
       };
     }
 
@@ -832,10 +789,7 @@
 
       return {
         framework_name: metric.framework_name || fallbackName || "Unknown framework",
-        alignment_score: normaliseScore(metric.alignment_score),
-        concern_score: normaliseScore(metric.concern_score),
-        confidence_score: normaliseScore(metric.confidence_score),
-        verdict_label: metric.verdict_label || "mixed",
+        verdict_label: metric.verdict_label || "Not assessed",
         brief_rationale: metric.brief_rationale || ""
       };
     }
@@ -862,7 +816,7 @@
         return {
           cleanedText,
           metric: null,
-          error: "A benchmark JSON block was found but could not be parsed. The essay text is still shown below."
+          error: "An assessment JSON block was found but could not be parsed. The essay text is still shown below."
         };
       }
     }
@@ -981,14 +935,6 @@
 
     function formatVerdictLabel(value) {
       return String(value || "mixed").replace(/_/g, " ").replace(/\b\w/g, char => char.toUpperCase());
-    }
-
-    function normaliseScore(value) {
-      const number = Number(value);
-      if (!Number.isFinite(number)) {
-        return 0;
-      }
-      return Math.max(0, Math.min(100, Math.round(number)));
     }
 
     function setStatus(status, message) {
