@@ -988,7 +988,7 @@
 
       function walk(node) {
         if (node.nodeType === Node.TEXT_NODE) {
-          return escapeHtml(node.textContent || "");
+          return renderInlineMarkdown(node.textContent || "");
         }
 
         if (node.nodeType !== Node.ELEMENT_NODE) {
@@ -1007,6 +1007,10 @@
       }
 
       return Array.from(doc.body.childNodes).map(walk).join("");
+    }
+
+    function renderInlineMarkdown(text) {
+      return escapeHtml(text).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
     }
 
     function renderPlainText(text) {
@@ -1034,27 +1038,27 @@
           continue;
         }
 
-        if (/^####\s+/.test(line)) {
+        if (/^####(?:\s+|(?=\d+\)))/.test(line)) {
           closeList();
-          html += `<h4>${escapeHtml(line.replace(/^####\s+/, ""))}</h4>`;
+          html += `<h4>${renderInlineMarkdown(line.replace(/^####(?:\s+|(?=\d+\)))/, ""))}</h4>`;
           continue;
         }
 
-        if (/^###\s+/.test(line)) {
+        if (/^###(?:\s+|(?=\d+\)))/.test(line)) {
           closeList();
-          html += `<h3>${escapeHtml(line.replace(/^###\s+/, ""))}</h3>`;
+          html += `<h3>${renderInlineMarkdown(line.replace(/^###(?:\s+|(?=\d+\)))/, ""))}</h3>`;
           continue;
         }
 
-        if (/^##\s+/.test(line)) {
+        if (/^##(?:\s+|(?=\d+\)))/.test(line)) {
           closeList();
-          html += `<h2>${escapeHtml(line.replace(/^##\s+/, ""))}</h2>`;
+          html += `<h2>${renderInlineMarkdown(line.replace(/^##(?:\s+|(?=\d+\)))/, ""))}</h2>`;
           continue;
         }
 
-        if (/^#\s+/.test(line)) {
+        if (/^#(?:\s+|(?=\d+\)))/.test(line)) {
           closeList();
-          html += `<h1>${escapeHtml(line.replace(/^#\s+/, ""))}</h1>`;
+          html += `<h1>${renderInlineMarkdown(line.replace(/^#(?:\s+|(?=\d+\)))/, ""))}</h1>`;
           continue;
         }
 
@@ -1063,12 +1067,12 @@
             html += "<ul>";
             inList = true;
           }
-          html += `<li>${escapeHtml(line.replace(/^[-*]\s+/, ""))}</li>`;
+          html += `<li>${renderInlineMarkdown(line.replace(/^[-*]\s+/, ""))}</li>`;
           continue;
         }
 
         closeList();
-        html += `<p>${escapeHtml(line)}</p>`;
+        html += `<p>${renderInlineMarkdown(line)}</p>`;
       }
 
       closeList();
