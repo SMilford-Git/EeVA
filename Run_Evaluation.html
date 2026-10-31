@@ -850,7 +850,11 @@
     }
 
     function renderInlineMarkdown(text) {
-      return escapeHtml(text).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+      const formatted = escapeHtml(text).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+      return formatted.replace(
+        /^(\s*)(Strongest Alignment:|Weakest Alignment:|Cross-Framework Patterns:|Overall Ethical Position:)/i,
+        "$1<strong>$2</strong>"
+      );
     }
 
     function renderPlainText(text) {
