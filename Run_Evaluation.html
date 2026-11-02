@@ -746,35 +746,38 @@
 
     function renderBenchmarkSection(benchmarkData) {
       const summaryMetric = benchmarkData.summaryMetric;
-      const frameworks = benchmarkData.frameworks || [];
       let topCards = "";
 
       if (summaryMetric) {
-        // Use the framework verdicts as the single source of truth.
-        // Do not use the independently generated strongest/weakest lists.
-        const namesFor = (verdict) => frameworks
-          .filter(item => String(item.verdict_label || "").trim().toLowerCase() === verdict)
-          .map(item => item.framework_name);
+        // Relative alignment is a separate synthesis judgement, not an
+        // absolute strong/medium/weak verdict from the individual reports.
+        const uniqueNames = (value) => Array.isArray(value)
+          ? [...new Set(value.filter(name => typeof name === "string" && name.trim()).map(name => name.trim()))]
+          : [];
+        const strongest = uniqueNames(summaryMetric.strongest_frameworks);
+        const weakest = uniqueNames(summaryMetric.weakest_frameworks);
+        const weakestSet = new Set(weakest.map(name => name.toLowerCase()));
+        const contradictory = strongest.some(name => weakestSet.has(name.toLowerCase()));
 
-        const strong = namesFor("strong");
-        const medium = namesFor("medium");
-        const weak = namesFor("weak");
+        // Never display a framework on both sides of a relative comparison.
+        const strongestText = contradictory ? "Comparison inconclusive" :
+          (listToText(strongest) || "No clear distinction");
+        const weakestText = contradictory ? "Comparison inconclusive" :
+          (listToText(weakest) || "No clear distinction");
 
         topCards = `
+          <p class="muted">Relative philosophical compatibility across the evaluated frameworks. Individual Strong / Medium / Weak verdicts remain in each framework report.</p>
           <div class="metric-grid">
             <div class="metric-card">
-              <div class="metric-label">Strong alignment</div>
-              <div class="metric-value" style="font-size:18px;">${escapeHtml(listToText(strong) || "None")}</div>
+              <div class="metric-label">Strongest relative alignment</div>
+              <div class="metric-value" style="font-size:18px;">${escapeHtml(strongestText)}</div>
             </div>
             <div class="metric-card">
-              <div class="metric-label">Conditional / Mixed alignment</div>
-              <div class="metric-value" style="font-size:18px;">${escapeHtml(listToText(medium) || "None")}</div>
-            </div>
-            <div class="metric-card">
-              <div class="metric-label">Weak alignment</div>
-              <div class="metric-value" style="font-size:18px;">${escapeHtml(listToText(weak) || "None")}</div>
+              <div class="metric-label">Weakest relative alignment</div>
+              <div class="metric-value" style="font-size:18px;">${escapeHtml(weakestText)}</div>
             </div>
           </div>
+          ${contradictory ? '<div class="benchmark-note"><strong>Comparison note.</strong> The synthesis assigns a framework to both relative positions. No comparative ranking is displayed; review the synthesis before interpreting this result.</div>' : ""}
           ${summaryMetric.cross_framework_pattern ? `<div class="benchmark-note"><strong>Cross-framework pattern.</strong> ${escapeHtml(summaryMetric.cross_framework_pattern)}</div>` : ""}
           ${summaryMetric.overall_ethical_position ? `<div class="benchmark-note"><strong>Overall ethical position.</strong> ${escapeHtml(summaryMetric.overall_ethical_position)}</div>` : ""}
         `;
