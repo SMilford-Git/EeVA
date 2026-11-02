@@ -146,7 +146,20 @@ footer{text-align:center;padding:25px;color:var(--muted);border-top:1px solid va
 .hero h1{font-size:clamp(2rem,4vw,3.2rem);line-height:1.1;letter-spacing:-.04em}
 .framework{scroll-margin-top:96px}
 @media(max-width:720px){.topbar{flex-direction:column;align-items:flex-start;padding:14px 0}.nav{justify-content:flex-start}.hero{padding:22px}}
-</style></head>
+
+    /* Keep all five navigation links on one row at desktop widths. */
+    @media (min-width: 901px) {
+      .site-header .topbar { gap: 12px; }
+      .site-header .brand { flex: 0 1 auto; min-width: 0; gap: 10px; }
+      .site-header .nav { flex: 0 0 auto; flex-wrap: nowrap; gap: 4px; }
+      .site-header .nav a { padding: 9px 10px; white-space: nowrap; font-size: 0.91rem; }
+      .site-header .brand-subtitle { font-size: 0.82rem; }
+    }
+    @media (max-width: 900px) {
+      .site-header .topbar { flex-direction: column; align-items: flex-start; gap: 8px; padding: 12px 0; }
+      .site-header .nav { justify-content: flex-start; }
+    }
+  </style></head>
 <body><header class="site-header">
     <div class="wrap topbar">
       <a class="brand" href="index.html" aria-label="EeVA home page">
