@@ -746,18 +746,33 @@
 
     function renderBenchmarkSection(benchmarkData) {
       const summaryMetric = benchmarkData.summaryMetric;
+      const frameworks = benchmarkData.frameworks || [];
       let topCards = "";
 
       if (summaryMetric) {
+        // Use the framework verdicts as the single source of truth.
+        // Do not use the independently generated strongest/weakest lists.
+        const namesFor = (verdict) => frameworks
+          .filter(item => String(item.verdict_label || "").trim().toLowerCase() === verdict)
+          .map(item => item.framework_name);
+
+        const strong = namesFor("strong");
+        const medium = namesFor("medium");
+        const weak = namesFor("weak");
+
         topCards = `
           <div class="metric-grid">
             <div class="metric-card">
-              <div class="metric-label">Strongest alignment</div>
-              <div class="metric-value" style="font-size:18px;">${escapeHtml(listToText(summaryMetric.strongest_frameworks) || "—")}</div>
+              <div class="metric-label">Strong alignment</div>
+              <div class="metric-value" style="font-size:18px;">${escapeHtml(listToText(strong) || "None")}</div>
             </div>
             <div class="metric-card">
-              <div class="metric-label">Weakest alignment</div>
-              <div class="metric-value" style="font-size:18px;">${escapeHtml(listToText(summaryMetric.weakest_frameworks) || "—")}</div>
+              <div class="metric-label">Conditional / Mixed alignment</div>
+              <div class="metric-value" style="font-size:18px;">${escapeHtml(listToText(medium) || "None")}</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Weak alignment</div>
+              <div class="metric-value" style="font-size:18px;">${escapeHtml(listToText(weak) || "None")}</div>
             </div>
           </div>
           ${summaryMetric.cross_framework_pattern ? `<div class="benchmark-note"><strong>Cross-framework pattern.</strong> ${escapeHtml(summaryMetric.cross_framework_pattern)}</div>` : ""}
